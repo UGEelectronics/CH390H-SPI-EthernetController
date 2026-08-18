@@ -97,7 +97,8 @@ Use a standard Ethernet cable to connect the MCU system to a switch, router, PC,
 </p>
 
 - Schematic: [`Module_Schematic.png`](Module_Schematic.png)
-- Interactive BOM: [`InteractiveBOM_CH390H Module.html`](InteractiveBOM_CH390H%20Module.html)
+- Interactive BOM (opens in the browser): [https://ugeelectronics.github.io/CH390H-SPI-EthernetController/bom.html](https://ugeelectronics.github.io/CH390H-SPI-EthernetController/bom.html)
+- Interactive BOM source file: [`InteractiveBOM_CH390H Module.html`](InteractiveBOM_CH390H%20Module.html) (too large for GitHub’s file viewer; use the link above)
 - Full write-up: [`Module Specs.odt`](Module%20Specs.odt)
 
 ## Onboard components
@@ -230,6 +231,7 @@ Ethernet cable and MCU are not included unless specifically stated.
 ├── Module_Schematic.png
 ├── PCB For CH390H Ethernet Module.jpg
 ├── InteractiveBOM_CH390H Module.html
+├── site/                       GitHub Pages landing page
 ├── CH390H_Arduino/             Arduino-ESP32 example sketch
 └── CH390H_ESP32/s3-ch390h/     ESP-IDF example + CH390 driver
 ```
