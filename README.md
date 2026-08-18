@@ -1,6 +1,6 @@
 # CH390H SPI to Ethernet Controller Module
 
-Compact **10/100 Mbps Ethernet** expansion for microcontrollers over **SPI**. This repository contains the module documentation, schematic, PCB artwork, interactive BOM, and an ESP32-S3 example firmware.
+Compact **10/100 Mbps Ethernet** expansion for microcontrollers over **SPI**. This repository contains the module documentation, schematic, PCB artwork, interactive BOM, an ESP32-S3 ESP-IDF example, and an Arduino-ESP32 example.
 
 <p align="center">
   <img src="PCB%20For%20CH390H%20Ethernet%20Module.jpg" alt="CH390H SPI Ethernet module PCB" width="520">
@@ -137,6 +137,66 @@ idf.py -p PORT flash monitor
 
 Driver usage details are in [`CH390H_ESP32/s3-ch390h/components/ch390/README.md`](CH390H_ESP32/s3-ch390h/components/ch390/README.md). Downloaded IDF components in `managed_components/` are omitted from this repo and will be restored by the IDF Component Manager from `idf_component.yml`.
 
+## Arduino IDE (ESP32, no ESP-IDF project)
+
+CH390H is a SPI **MAC + PHY**. It is **not** a W5500, so the built-in Arduino-ESP32 `ETH.begin(ETH_PHY_W5500, ...)` path and the classic Arduino `Ethernet.h` (W5100/W5500) library will not work.
+
+Use the Arduino-ESP32 core plus the [ESP32-CH390](https://github.com/meshtastic/ESP32-CH390) library. That library is an Arduino port of the same CH390 driver and plugs into the ESP32 network stack, so `WebServer`, `WiFiClient`, and `HTTPClient` work over Ethernet the same way they do over Wi-Fi.
+
+### Arduino IDE setup
+
+1. Install **esp32 by Espressif** from Boards Manager (Arduino-ESP32 2.x or 3.x).
+2. Install [ESP32-CH390](https://github.com/meshtastic/ESP32-CH390): **Sketch → Include Library → Add .ZIP Library…**, or clone it into `Documents/Arduino/libraries/ESP32_CH390`.
+3. Select your ESP32 / ESP32-S3 board and open [`CH390H_Arduino/CH390H_ESP32_Ethernet/CH390H_ESP32_Ethernet.ino`](CH390H_Arduino/CH390H_ESP32_Ethernet/CH390H_ESP32_Ethernet.ino).
+
+### Wiring
+
+The module is **3.3 V only**. Connect GND to the ESP32 GND. INT is optional; leave it unused and set `int_gpio` to `-1` to poll.
+
+| CH390H module | Function | ESP32-S3 (this repo) | Classic ESP32 VSPI |
+| --- | --- | --- | --- |
+| CS | Chip select | GPIO 10 | GPIO 5 |
+| SCK | SPI clock | GPIO 12 | GPIO 18 |
+| MOSI | MCU → CH390 | GPIO 11 | GPIO 23 |
+| MISO | CH390 → MCU | GPIO 13 | GPIO 19 |
+| INT | Interrupt (optional) | GPIO 14 | GPIO 4 |
+| 3V3 | Power | 3.3 V | 3.3 V |
+| GND | Ground | GND | GND |
+
+Keep SPI around **20 MHz** with the Arduino library (maximum about 33 MHz). No MDC/MDIO pins are needed; the PHY is inside the CH390H.
+
+### Sketch outline
+
+```cpp
+#include "ESP32_CH390.h"
+#include "WiFi.h"
+
+void setup() {
+  Serial.begin(115200);
+  WiFi.onEvent([](WiFiEvent_t event) {
+    if (event == ARDUINO_EVENT_ETH_GOT_IP) {
+      Serial.println(CH390.localIP());
+    }
+  });
+
+  ch390_config_t cfg = CH390_DEFAULT_CONFIG();
+  cfg.spi_cs_gpio   = 10;
+  cfg.spi_sck_gpio  = 12;
+  cfg.spi_mosi_gpio = 11;
+  cfg.spi_miso_gpio = 13;
+  cfg.spi_clock_mhz = 20;
+  cfg.spi_host      = 1;
+  cfg.int_gpio      = 14;
+
+  CH390.begin(cfg);
+  // Optional static IP:
+  // CH390.config(IPAddress(192,168,1,10), IPAddress(192,168,1,1),
+  //              IPAddress(255,255,255,0), IPAddress(8,8,8,8));
+}
+```
+
+If `CH390.begin()` fails, check 3.3 V, common GND, and that CS/SCK/MOSI/MISO are not swapped. The RJ45 link LED should light when the cable is in a live switch or router.
+
 ## Applications
 
 - STM32 / ESP32 / Arduino Ethernet expansion
@@ -170,5 +230,6 @@ Ethernet cable and MCU are not included unless specifically stated.
 ├── Module_Schematic.png
 ├── PCB For CH390H Ethernet Module.jpg
 ├── InteractiveBOM_CH390H Module.html
+├── CH390H_Arduino/             Arduino-ESP32 example sketch
 └── CH390H_ESP32/s3-ch390h/     ESP-IDF example + CH390 driver
 ```
