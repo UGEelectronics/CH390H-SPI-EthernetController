@@ -1,0 +1,15 @@
+# ESP-IDF build and downloaded components
+build/
+sdkconfig.old
+managed_components/
+
+# Secrets and credentials
+.env
+.env.*
+*.pem
+*.key
+
+# OS junk
+Thumbs.db
+Desktop.ini
+.DS_Store

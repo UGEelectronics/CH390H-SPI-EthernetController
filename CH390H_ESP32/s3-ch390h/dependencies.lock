@@ -1,0 +1,57 @@
+dependencies:
+  esp-qa/ping-cmd:
+    component_hash: 1cec883d3fb4dd22fbbe1916528d3e322c0bf2497ec13ddecb36c3dd783f766a
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=4.3'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 0.0.1
+  esp-qa/wifi-cmd:
+    component_hash: 2887412dd64b0980731e26a49be7ea85fcfc077018be55183612c1732e350196
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=4.3'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 0.1.7
+  espressif/iperf:
+    component_hash: 2eb3fb408154a0b5974876242264b263d46537d1c2d22b7ffa9de9e284f09978
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=4.3'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 0.1.2
+  espressif/iperf-cmd:
+    component_hash: c8f42e2760640a03121522476f45028088709d1407886700baefd6c70f7ea39d
+    dependencies:
+    - name: espressif/iperf
+      registry_url: https://components.espressif.com/
+      require: private
+      version: =0.1.2
+    - name: idf
+      require: private
+      version: '>=4.3'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 0.1.2
+  idf:
+    source:
+      type: idf
+    version: 5.3.1
+direct_dependencies:
+- esp-qa/ping-cmd
+- esp-qa/wifi-cmd
+- espressif/iperf-cmd
+- idf
+manifest_hash: 508e9bbd6fd510bffff14eeec50a65ad909be49414b5258cf26f98405dfbefda
+target: esp32s3
+version: 2.0.0
