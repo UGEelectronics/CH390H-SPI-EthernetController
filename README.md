@@ -8,6 +8,11 @@ Compact **10/100 Mbps Ethernet** expansion for microcontrollers over **SPI**. Th
 
 The hardware is supplied as an **unassembled bare PCB**. You source and solder the CH390H controller, 25 MHz crystal, RJ45 with magnetics, passives, LEDs, and SPI header yourself. It is intended for electronics enthusiasts, embedded developers, and students who want a DIY SPI Ethernet interface.
 
+## Buy options
+
+- Full assembled module: [Buy here](https://uge-one.com/?post_type=product&p=169848&preview=true)
+- Empty PCB for DIY soldering: [Buy here](https://uge-one.com/product/pcb-for-ch390h-spi-ethernet-controller-module/)
+
 ## Key features
 
 - WCH **CH390H** industrial Ethernet controller (MAC + PHY)
