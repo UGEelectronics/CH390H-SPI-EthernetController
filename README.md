@@ -39,7 +39,7 @@ Electrical limits, SPI timing, and supported Ethernet modes must be taken from t
 
 ## SPI interface
 
-The module uses a 7-pin header for a direct MCU connection:
+The module uses a 7-pin header. **There is no RST pin** on this PCB. That is normal: the driver resets the CH390 in software. In sketches use `PIN_RST -1`.
 
 | Pin | Function | Description |
 | --- | --- | --- |
@@ -47,9 +47,46 @@ The module uses a 7-pin header for a direct MCU connection:
 | SCK | SPI Clock | SPI clock |
 | MOSI | SPI MOSI | MCU → CH390H data |
 | MISO | SPI MISO | CH390H → MCU data |
-| INT | Interrupt | Ethernet controller interrupt output |
-| 3V3 | Power | 3.3 V supply |
-| GND | Ground | Power and signal ground |
+| INT | Interrupt | Ethernet interrupt (optional) |
+| 3V3 | Power | 3.3 V only — not 5 V |
+| GND | Ground | Common ground with the MCU |
+
+### Connect to ESP32
+
+**3.3 V only.** Common GND. Do not connect 5 V to 3V3.
+
+| CH390H module | ESP32 (DevKit / WROOM) | ESP32-S3 |
+| --- | --- | --- |
+| CS | **GPIO 5** | **GPIO 10** |
+| SCK | **GPIO 18** (default SCK) | **GPIO 12** (default SCK) |
+| MOSI | **GPIO 23** (default MOSI) | **GPIO 11** (default MOSI) |
+| MISO | **GPIO 19** (default MISO) | **GPIO 13** (default MISO) |
+| INT | **GPIO 4** | **GPIO 14** |
+| 3V3 | 3.3 V | 3.3 V |
+| GND | GND | GND |
+| RST | *not on module* → `PIN_RST -1` | `PIN_RST -1` |
+
+Arduino examples (ESP32):
+
+```cpp
+#define PIN_CS   5
+#define PIN_INT  4
+#define PIN_RST  -1   // this module has no reset pin
+
+CH390.init(PIN_CS, PIN_INT, PIN_RST);
+```
+
+Arduino examples (ESP32-S3):
+
+```cpp
+#define PIN_CS   10
+#define PIN_INT  14
+#define PIN_RST  -1
+
+CH390.init(PIN_CS, PIN_INT, PIN_RST);
+```
+
+SCK / MOSI / MISO are the board default SPI pins, so you do not pass them to `init()` unless you rewired SPI. INT is optional: set `PIN_INT` to `-1` to poll if you leave INT unconnected.
 
 ### Typical MCU connection
 
@@ -142,57 +179,64 @@ Driver usage details are in [`CH390H_ESP32/s3-ch390h/components/ch390/README.md`
 
 CH390H is a SPI **MAC + PHY**. It is **not** a W5500, so the built-in Arduino-ESP32 `ETH.begin(ETH_PHY_W5500, ...)` path and the classic Arduino `Ethernet.h` (W5100/W5500) library will not work.
 
-Use the Arduino-ESP32 core plus the [ESP32-CH390](https://github.com/meshtastic/ESP32-CH390) library. That library is an Arduino port of the same CH390 driver and plugs into the ESP32 network stack, so `WebServer`, `WiFiClient`, and `HTTPClient` work over Ethernet the same way they do over Wi-Fi.
+Use the Arduino-ESP32 core plus the [ESP32-CH390H-lib](https://github.com/UGEelectronics/ESP32-CH390H-lib) library. That library is an Arduino port of the same CH390 driver and plugs into the ESP32 network stack, so `WebServer`, `WiFiClient`, and `HTTPClient` work over Ethernet the same way they do over Wi-Fi.
 
 ### Arduino IDE setup
 
 1. Install **esp32 by Espressif** from Boards Manager (Arduino-ESP32 2.x or 3.x).
-2. Install [ESP32-CH390](https://github.com/meshtastic/ESP32-CH390): **Sketch → Include Library → Add .ZIP Library…**, or clone it into `Documents/Arduino/libraries/ESP32_CH390`.
-3. Select your ESP32 / ESP32-S3 board and open [`CH390H_Arduino/CH390H_ESP32_Ethernet/CH390H_ESP32_Ethernet.ino`](CH390H_Arduino/CH390H_ESP32_Ethernet/CH390H_ESP32_Ethernet.ino).
+2. Install the CH390 library from the standalone repo: [UGEelectronics/ESP32-CH390H-lib](https://github.com/UGEelectronics/ESP32-CH390H-lib). Use **Sketch → Include Library → Add .ZIP Library…** with the ZIP from that repo, or clone it into `Documents/Arduino/libraries/ESP32-CH390`.
+3. Open **File → Examples → ESP32-CH390** and pick a sketch. Every example starts with:
 
-### Wiring
+```cpp
+#define PIN_CS   5     // ESP32-S3: 10
+#define PIN_INT  4     // ESP32-S3: 14
+#define PIN_RST  -1    // module has no RST pin
 
-The module is **3.3 V only**. Connect GND to the ESP32 GND. INT is optional; leave it unused and set `int_gpio` to `-1` to poll.
+CH390.init(PIN_CS, PIN_INT, PIN_RST);
+if (!CH390.begin()) {
+  Serial.println("CH390 not detected on SPI");
+  while (1) {}
+}
+```
 
-| CH390H module | Function | ESP32-S3 (this repo) | Classic ESP32 VSPI |
-| --- | --- | --- | --- |
-| CS | Chip select | GPIO 10 | GPIO 5 |
-| SCK | SPI clock | GPIO 12 | GPIO 18 |
-| MOSI | MCU → CH390 | GPIO 11 | GPIO 23 |
-| MISO | CH390 → MCU | GPIO 13 | GPIO 19 |
-| INT | Interrupt (optional) | GPIO 14 | GPIO 4 |
-| 3V3 | Power | 3.3 V | 3.3 V |
-| GND | Ground | GND | GND |
+Use **GPIO 5 / 4** on ESP32 and **GPIO 10 / 14** on ESP32-S3, with `PIN_RST -1`. MOSI/MISO/SCK are the default SPI pins (see **Connect to ESP32** above).
 
-Keep SPI around **20 MHz** with the Arduino library (maximum about 33 MHz). No MDC/MDIO pins are needed; the PHY is inside the CH390H.
+| Example | Feature (same as W5500 / typical SPI Ethernet chips) |
+| --- | --- |
+| `Basic` / `StaticIP` | SPI hardware test, then DHCP or fixed IP |
+| `WebServer` | HTTP page, JSON status, GPIO |
+| `TcpEchoServer` / `TcpClient` | TCP server and client |
+| `UdpNtpClient` / `UdpSendReceive` | NTP and UDP packets |
+| `MdnsWebServer` | `http://ch390h.local/` |
+| `HttpsClient` | TLS client (ESP32 stack) |
+| `ArduinoOTA` | Firmware update over Ethernet |
+| `SerialBridge` | UART ↔ TCP (telnet port 23) |
+| `LinkMonitor` | Link/PHY registers; poll mode if INT is unused |
+| `MqttClient` | MQTT (install PubSubClient) |
+| `Advanced` | Custom SPI pins, MAC, PHY dump, HTTP GET |
+
+There is also a standalone sketch at [`CH390H_Arduino/CH390H_ESP32_Ethernet/CH390H_ESP32_Ethernet.ino`](CH390H_Arduino/CH390H_ESP32_Ethernet/CH390H_ESP32_Ethernet.ino).
+
+### Wiring notes
+
+The 7-pin header has **no RST**. Leave `PIN_RST` at `-1`. INT is optional; set `PIN_INT` to `-1` to poll. Keep SPI around **20 MHz** in Arduino (max about 33 MHz). No MDC/MDIO: the PHY is inside the CH390H.
 
 ### Sketch outline
 
 ```cpp
+#define PIN_CS   5
+#define PIN_INT  4
+#define PIN_RST  -1
+
 #include "ESP32_CH390.h"
-#include "WiFi.h"
 
 void setup() {
   Serial.begin(115200);
-  WiFi.onEvent([](WiFiEvent_t event) {
-    if (event == ARDUINO_EVENT_ETH_GOT_IP) {
-      Serial.println(CH390.localIP());
-    }
-  });
-
-  ch390_config_t cfg = CH390_DEFAULT_CONFIG();
-  cfg.spi_cs_gpio   = 10;
-  cfg.spi_sck_gpio  = 12;
-  cfg.spi_mosi_gpio = 11;
-  cfg.spi_miso_gpio = 13;
-  cfg.spi_clock_mhz = 20;
-  cfg.spi_host      = 1;
-  cfg.int_gpio      = 14;
-
-  CH390.begin(cfg);
-  // Optional static IP:
-  // CH390.config(IPAddress(192,168,1,10), IPAddress(192,168,1,1),
-  //              IPAddress(255,255,255,0), IPAddress(8,8,8,8));
+  CH390.init(PIN_CS, PIN_INT, PIN_RST);
+  if (!CH390.begin()) {
+    Serial.println("CH390 not detected on SPI");
+    while (1) {}
+  }
 }
 ```
 
@@ -232,6 +276,7 @@ Ethernet cable and MCU are not included unless specifically stated.
 ├── PCB For CH390H Ethernet Module.jpg
 ├── InteractiveBOM_CH390H Module.html
 ├── site/                       GitHub Pages landing page
-├── CH390H_Arduino/             Arduino-ESP32 example sketch
+├── CH390H_Arduino/             Standalone Arduino-ESP32 sketch
+├── (external) ESP32-CH390H-lib Arduino library + examples at github.com/UGEelectronics/ESP32-CH390H-lib
 └── CH390H_ESP32/s3-ch390h/     ESP-IDF example + CH390 driver
 ```
