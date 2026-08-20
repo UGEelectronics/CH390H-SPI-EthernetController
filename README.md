@@ -3,19 +3,30 @@
 Compact **10/100 Mbps Ethernet** expansion for microcontrollers over **SPI**. This repository contains the module documentation, schematic, PCB artwork, interactive BOM, an ESP32-S3 ESP-IDF example, and an Arduino-ESP32 example.
 
 <p align="center">
-  <img src="PCB%20For%20CH390H%20Ethernet%20Module.jpg" alt="CH390H SPI Ethernet module PCB" width="520">
+  <img src="IMGs/CH390H%20Module2.jpeg" alt="CH390H SPI to Ethernet final assembled module" width="520">
 </p>
 
-The hardware is supplied as an **unassembled bare PCB**. You source and solder the CH390H controller, 25 MHz crystal, RJ45 with magnetics, passives, LEDs, and SPI header yourself. It is intended for electronics enthusiasts, embedded developers, and students who want a DIY SPI Ethernet interface.
+Available as a **fully assembled module** or as an **empty PCB** for DIY soldering. It is intended for electronics enthusiasts, embedded developers, and students who need a small SPI Ethernet interface.
 
 ## Buy options
 
 - Full assembled module: [Buy here](https://uge-one.com/?post_type=product&p=169848&preview=true)
 - Empty PCB for DIY soldering: [Buy here](https://uge-one.com/product/pcb-for-ch390h-spi-ethernet-controller-module/)
 
+## Compact size advantage
+
+Compared with common SPI Ethernet modules such as **CH392F** and **W5500**, the **CH390H module is the smallest** — ideal when board space is limited.
+
+<p align="center">
+  <img src="IMGs/Ethernet%20Modules.jpeg" alt="Size comparison: CH390H (smallest), CH392F, and W5500 Ethernet modules" width="720">
+</p>
+
+<p align="center"><em>Left to right: CH390H (smallest), CH392F, W5500</em></p>
+
 ## Key features
 
 - WCH **CH390H** industrial Ethernet controller (MAC + PHY)
+- **Smallest footprint** among typical CH390H / CH392F / W5500 SPI Ethernet modules
 - **SPI** host interface to an external MCU
 - **10/100 Mbps** Ethernet, IEEE 802.3u class PHY
 - Standard **RJ45** with integrated magnetics
@@ -280,6 +291,7 @@ Ethernet cable and MCU are not included unless specifically stated.
 ├── Module_Schematic.png
 ├── PCB For CH390H Ethernet Module.jpg
 ├── InteractiveBOM_CH390H Module.html
+├── IMGs/                       Final module and size-comparison photos
 ├── site/                       GitHub Pages landing page
 ├── CH390H_Arduino/             Standalone Arduino-ESP32 sketch
 ├── (external) ESP32-CH390H-lib Arduino library + examples at github.com/UGEelectronics/ESP32-CH390H-lib
